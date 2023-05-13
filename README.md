@@ -11,3 +11,5 @@ Javascript
 |-> Strømpriser
     |-> <Ditt navn>
 ```
+
+:)
