@@ -1,0 +1,7 @@
+{
+  "Function": "3*sin((pi/10)*x+(pi/2))+8",
+  "a": 0,
+  "b": 100,
+  "Ring Accuracy": 300,
+  "Interval Accuracy": 0.5
+}
