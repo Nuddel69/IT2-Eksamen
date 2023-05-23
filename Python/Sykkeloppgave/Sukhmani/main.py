@@ -75,6 +75,6 @@ def show(data: Data) -> None:
     data.plot_trips_per_day()
 
 if __name__ == '__main__':
-    data = Data('05.csv')
+    data = Data('./05.csv')
     print(data)
     show(data)
