@@ -1,9 +1,7 @@
 # Data Manipulation
 import pandas as pd
 import numpy as np
-
 import json
-
 
 class Dataset:
     def __init__(self, path: str) -> None:
@@ -30,7 +28,7 @@ class Dataset:
             return 0
         except FileNotFoundError:
             return 1
-        except json.JSONDecodeError:
+        except pd.errors.ParserError:
             return 2
 
     def parse_csv(self) -> int:
@@ -50,15 +48,14 @@ class Dataset:
         except pd.errors.ParserError:
             return 2
 
-    def sort(self, key: str) -> None:
+    def sort(self, key: str, ascending: bool = False) -> None:
         '''
         Sort the data based on the specified key in descending order.
 
         @param key: The column name to sort the data by.
+        @param ascending: Whether or not to sort by ascending order. Defaults to false.
         '''
-        self._data.sort_values(key, ascending=False, inplace=True)
+        self._data.sort_values(key, ascending=ascending, inplace=True)
 
     def cleanup(self) -> None:
-        '''
-        Clean up the dataset.
-        '''
+        pass
