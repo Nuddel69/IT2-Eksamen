@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>App Store</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <style>
+       body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f8f8;
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #sort-buttons {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .sort-button {
+      margin-right: 10px;
+    }
+    #sort-category-label {
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    #app-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-gap: 20px;
+    }
+    .app-card {
+      background-color: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease-in-out;
+    }
+    .app-card:hover {
+      cursor: pointer;
+      background-color: #f0f0f0;
+    }
+    .app-card h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .app-card p {
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+    #content-rating-chart,
+    #category-chart {
+      margin-top: 20px;
+      height: 400px;
+    }
+  </style>
+  <script src="js/highcharts.js"></script>
+  <script>
+    var jsonData;
+    var displayLimit = 25;
+    var currentSort = 'installs';
+    var sortAscending = true; // Added variable to track sort order
+
+    function displayData(sortBy) {
+      currentSort = sortBy;
+      var xhr = new XMLHttpRequest();
+      xhr.overrideMimeType("application/json");
+      xhr.open('GET', 'googleplaystore.json', true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status == "200") {
+          jsonData = JSON.parse(xhr.responseText);
+          sortApps(sortBy);
+        }
+      };
+      xhr.send(null);
+    }
+
+    function sortApps(sortBy) {
+      var sortedApps;
+
+      if (sortBy === 'installs') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return parseInt(b.Installs.replace(/\D/g, '')) - parseInt(a.Installs.replace(/\D/g, ''));
+        });
+      } else if (sortBy === 'rating') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return parseFloat(b.Rating) - parseFloat(a.Rating);
+        });
+      } else if (sortBy === 'size') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return parseFloat(b.Size) - parseFloat(a.Size);
+        });
+      } else if (sortBy === 'price') {
+        sortedApps = jsonData.sort(function (a, b) {
+          var priceA = extractNumericValue(a.Price);
+          var priceB = extractNumericValue(b.Price);
+          return priceB - priceA;
+        });
+      } else if (sortBy === 'reviews') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return parseInt(b.Reviews.replace(/\D/g, '')) - parseInt(a.Reviews.replace(/\D/g, ''));
+        });
+      } else if (sortBy === 'lastupdated') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return new Date(b['Last Updated']) - new Date(a['Last Updated']);
+        });
+      } else if (sortBy === 'currentversion') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return compareVersions(b['Current Ver'], a['Current Ver']);
+        });
+      } else if (sortBy === 'androidversion') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return compareVersions(b['Android Ver'], a['Android Ver']);
+        });
+      } else {
+        console.log('Invalid sort criteria');
+        return;
+      }
+
+      if (!sortAscending) {
+        sortedApps.reverse(); // Reverse the order if sortAscending is false
+      }
+
+      displayApps(sortedApps.slice(0, displayLimit), sortBy);
+
+      countContentRating(jsonData);
+      countCategory(jsonData);
+    }
+
+    function toggleSortOrder() {
+      sortAscending = !sortAscending; // Toggle the sort order
+      sortApps(currentSort); // Re-sort the apps based on the current sort criteria
+    }
+    
+function compareVersions(versionA, versionB) {
+  var partsA = versionA.split('.');
+  var partsB = versionB.split('.');
+
+  for (var i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+    var partA = parseInt(partsA[i]) || 0;
+    var partB = parseInt(partsB[i]) || 0;
+
+    if (partA !== partB) {
+      return partA - partB;
+    }
+  }
+
+  return 0;
+}
+
+
+function removeDuplicates(array) {
+  var uniqueArray = [];
+  var appNames = [];
+
+  for (var i = 0; i < array.length; i++) {
+    var app = array[i];
+    var appName = app['App'];
+
+    if (!appNames.includes(appName)) {
+      uniqueArray.push(app);
+      appNames.push(appName);
+    }
+  }
+
+  return uniqueArray;
+}
+
+
+
+    function countContentRating(apps) {
+      var contentRatingCount = {};
+
+      for (var i = 0; i < apps.length; i++) {
+        var app = apps[i];
+        var contentRating = app['Content Rating'];
+
+        if (contentRatingCount.hasOwnProperty(contentRating)) {
+          contentRatingCount[contentRating]++;
+        } else {
+          contentRatingCount[contentRating] = 1;
+        }
+      }
+
+      displayContentRatingCount(contentRatingCount);
+    }
+
+    function countCategory(apps) {
+      var categoryCount = {};
+
+      for (var i = 0; i < apps.length; i++) {
+        var app = apps[i];
+        var category = app.Category;
+
+        if (categoryCount.hasOwnProperty(category)) {
+          categoryCount[category]++;
+        } else {
+          categoryCount[category] = 1;
+        }
+      }
+
+      displayCategoryCount(categoryCount);
+    }
+
+    function displayApps(apps, sortBy) {
+  var appContainer = document.getElementById("app-container");
+  appContainer.innerHTML = ""; // Clear previous app cards
+
+  var sortLabel = document.getElementById("sort-category-label");
+  sortLabel.textContent = getSortLabel(sortBy);
+
+  for (var i = 0; i < apps.length; i++) {
+    var app = apps[i];
+    var card = createAppCard(app);
+    appContainer.appendChild(card);
+  }
+}
+
+function createAppCard(app) {
+  var card = document.createElement("div");
+  card.className = "app-card";
+  card.addEventListener("click", function () {
+    showAppDetails(app);
+  });
+
+  var appName = document.createElement("h4");
+  appName.textContent = app['App'];
+
+  var appCategory = document.createElement("p");
+  appCategory.textContent = "Category: " + app['Category'];
+
+  var appRating = document.createElement("p");
+  appRating.textContent = "Rating: " + app['Rating'];
+
+  var appInstalls = document.createElement("p");
+  appInstalls.textContent = "Installs: " + app['Installs'];
+
+  var appPrice = document.createElement("p");
+  appPrice.textContent = "Price: " + app['Price'];
+
+  var appSize = document.createElement("p");
+  appSize.textContent = "Size: " + app['Size'];
+
+  var appReviews = document.createElement("p");
+  appReviews.textContent = "Reviews: " + app['Reviews'];
+
+  var appLastUpdated = document.createElement("p");
+  appLastUpdated.textContent = "Last Updated: " + app['Last Updated'];
+
+  var appCurrentVersion = document.createElement("p");
+  appCurrentVersion.textContent = "Current Version: " + app['Current Ver'];
+
+  var appAndroidVersion = document.createElement("p");
+  appAndroidVersion.textContent = "Android Version: " + app['Android Ver'];
+
+  // Apply styling based on the current sorting option
+  if (currentSort === 'installs') {
+    appInstalls.style.fontWeight = 'bold';
+    appInstalls.style.color = 'red';
+  } else if (currentSort === 'rating') {
+    appRating.style.fontWeight = 'bold';
+    appRating.style.color = 'red';
+  } else if (currentSort === 'size') {
+    appSize.style.fontWeight = 'bold';
+    appSize.style.color = 'red';
+  } else if (currentSort === 'price') {
+    appPrice.style.fontWeight = 'bold';
+    appPrice.style.color = 'red';
+  } else if (currentSort === 'reviews') {
+    appReviews.style.fontWeight = 'bold';
+    appReviews.style.color = 'red';
+  } else if (currentSort === 'lastupdated') {
+    appLastUpdated.style.fontWeight = 'bold';
+    appLastUpdated.style.color = 'red';
+  } else if (currentSort === 'currentversion') {
+    appCurrentVersion.style.fontWeight = 'bold';
+    appCurrentVersion.style.color = 'red';
+  } else if (currentSort === 'androidversion') {
+    appAndroidVersion.style.fontWeight = 'bold';
+    appAndroidVersion.style.color = 'red';
+  }
+
+  card.appendChild(appName);
+  card.appendChild(appCategory);
+  card.appendChild(appRating);
+  card.appendChild(appInstalls);
+  card.appendChild(appPrice);
+  card.appendChild(appSize);
+  card.appendChild(appReviews);
+  card.appendChild(appLastUpdated);
+  card.appendChild(appCurrentVersion);
+  card.appendChild(appAndroidVersion);
+
+  return card;
+}
+
+
+    function showAppDetails(app) {
+      // Replace with your own logic to display app details
+      alert("Showing details for app: " + app['App']);
+    }
+
+    function displayContentRatingCount(contentRatingCount) {
+      var contentRatingData = Object.keys(contentRatingCount).map(function (key) {
+        return [key, contentRatingCount[key]];
+      });
+
+      Highcharts.chart('content-rating-chart', {
+        chart: {
+          type: 'column'
+        },
+        title: {
+          text: 'App Count by Content Rating'
+        },
+        xAxis: {
+          type: 'category'
+        },
+        yAxis: {
+          title: {
+            text: 'Count'
+          }
+        },
+        series: [{
+          name: 'Count',
+          data: contentRatingData
+        }]
+      });
+    }
+
+    function displayCategoryCount(categoryCount) {
+      var categoryData = Object.keys(categoryCount).map(function (key) {
+        return [key, categoryCount[key]];
+      });
+
+      Highcharts.chart('category-chart', {
+        chart: {
+          type: 'pie'
+        },
+        title: {
+          text: 'App Count by Category'
+        },
+        series: [{
+          name: 'Count',
+          data: categoryData
+        }]
+      });
+    }
+
+    function extractNumericValue(price) {
+      return parseFloat(price.replace('$', ''));
+    }
+
+    function getSortLabel(sortBy) {
+      if (sortBy === 'installs') {
+        return 'Sort by Installs';
+      } else if (sortBy === 'rating') {
+        return 'Sort by Rating';
+      } else if (sortBy === 'size') {
+        return 'Sort by Size';
+      } else if (sortBy === 'price') {
+        return 'Sort by Price';
+      } else if (sortBy === 'reviews') {
+        return 'Sort by reviews'; 
+      } else if (sortBy === 'lastupdated') {
+        return 'Sort by lastupdated';
+      } else if (sortBy === 'currentversion') {
+        return 'Sort by currentversion';
+      } else if (sortBy === 'androidversion') {
+        return 'Sort by androidversion';
+      }  else {
+        return 'Invalid Sort Criteria';
+      }
+    }
+
+    displayData('installs'); // Initial display by installs
+
+    // Check if running in Live Server
+    if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+      alert('Please run the code in Live Server to load the JSON file!');
+    }
+    
+  </script>
+</head>
+<body>
+  <h1>App Store</h1>
+  <div id="sort-buttons">
+   <button class="sort-button" onclick="displayData('installs')">Sort by Installs</button>
+    <button class="sort-button" onclick="displayData('rating')">Sort by Rating</button>
+    <button class="sort-button" onclick="displayData('size')">Sort by Size</button>
+    <button class="sort-button" onclick="displayData('price')">Sort by Price</button>
+    <button class="sort-button" onclick="displayData('reviews')">Sort by Reviews</button>
+    <button class="sort-button" onclick="displayData('lastupdated')">Sort by Last-Updated</button>
+    <button class="sort-button" onclick="displayData('currentversion')">Sort by Current version</button>
+    <button class="sort-button" onclick="displayData('androidversion')">Sort by Android version</button>
+    <button class="sort-button" onclick="toggleSortOrder()">Toggle Sort Order</button>
+  </div>
+  <h2 id="sort-category-label"></h2>
+  <div id="app-container"></div>
+  <div id="content-rating-chart"></div>
+  <div id="category-chart"></div>
