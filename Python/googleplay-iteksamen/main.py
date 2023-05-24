@@ -65,8 +65,10 @@ if __name__ == "__main__":
     #appData.sort("Size", True)
     appData.sort("Type")
     appData.sort("Price")
+    appData.sort("Installs")
     
     print("\n\n")
     print(appData._data)
 
-    renderer.plot('App', 'Price', [0, 50], 'Dyreste apper', 'Appnavn', 'Priser i $')
+    #renderer.plot('App', 'Price', [0, 50], 'Dyreste apper', 'Appnavn', 'Priser i $')
+    renderer.plot('App', 'Installs', [0,25], "Most used apps", "Appnavn", "Installs" )
