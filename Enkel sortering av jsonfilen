@@ -10,7 +10,12 @@
       padding: 15px;
       margin-bottom: 20px;
     }
+    .app-card:hover {
+      cursor: pointer;
+      background-color: #f0f0f0;
+    }
   </style>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
   <script>
     var jsonData; // Global variable to store the JSON data
     var displayLimit = 25; // Number of entries to display per sort category
@@ -28,159 +33,209 @@
       xhr.send(null);
     }
 
+
     function sortApps(sortBy) {
-  var sortedApps;
+      var sortedApps;
 
-  if (sortBy === 'installs') {
-    sortedApps = jsonData.sort(function (a, b) {
-      return parseInt(b.Installs.replace(/\D/g, '')) - parseInt(a.Installs.replace(/\D/g, ''));
-    });
-  } else if (sortBy === 'rating') {
-    sortedApps = jsonData.sort(function (a, b) {
-      return parseFloat(b.Rating) - parseFloat(a.Rating);
-    });
-  } else if (sortBy === 'size') {
-    sortedApps = jsonData.sort(function (a, b) {
-      return parseFloat(b.Size) - parseFloat(a.Size);
-    });
-  } else if (sortBy === 'price') {
-    sortedApps = jsonData.sort(function (a, b) {
-      var priceA = extractNumericValue(a.Price);
-      var priceB = extractNumericValue(b.Price);
+      if (sortBy === 'installs') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return parseInt(b.Installs.replace(/\D/g, '')) - parseInt(a.Installs.replace(/\D/g, ''));
+        });
+      } else if (sortBy === 'rating') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return parseFloat(b.Rating) - parseFloat(a.Rating);
+        });
+      } else if (sortBy === 'size') {
+        sortedApps = jsonData.sort(function (a, b) {
+          return parseFloat(b.Size) - parseFloat(a.Size);
+        });
+      } else if (sortBy === 'price') {
+        sortedApps = jsonData.sort(function (a, b) {
+          var priceA = extractNumericValue(a.Price);
+          var priceB = extractNumericValue(b.Price);
 
-      if (a.Type === 'Free' && b.Type === 'Free') {
-        return 0; // Both apps are free, no price comparison needed
-      } else if (a.Type === 'Free') {
-        return 1; // 'Free' app comes after 'Paid' app
-      } else if (b.Type === 'Free') {
-        return -1; // 'Paid' app comes before 'Free' app
+          if (priceA === priceB) {
+            return 0;
+          } else if (priceA > priceB) {
+            return -1;
+          } else {
+            return 1;
+          }
+        });
       } else {
-        return priceB - priceA;
+        console.log('Invalid sort criteria');
+        return;
       }
-    })
-  } else {
-    console.log('Invalid sort criteria');
-    return;
-  }
 
-  displayApps(sortedApps, sortBy);
-}
+      displayApps(sortedApps.slice(0, displayLimit), sortBy); // Display limited number of apps
 
-function extractNumericValue(price) {
-  var numericValue = parseFloat(price.replace(/[^0-9.-]+/g, ''));
-  return isNaN(numericValue) ? 0 : numericValue;
-}
+      countContentRating(jsonData); // Count apps per content rating for the entire dataset
+      countCategory(jsonData); // Count apps per category for the entire dataset
+    }
 
 
-    function displayApps(apps, sortBy) {
-      var appContainer = document.getElementById('app-container');
-      appContainer.innerHTML = ''; // Clear previous content
-
-      var counter = 0; // Counter for limiting the number of entries
-
+    function countContentRating(apps) {
       var contentRatingCount = {};
+
+      for (var i = 0; i < apps.length; i++) {
+        var app = apps[i];
+        var contentRating = app['Content Rating'];
+
+        if (contentRatingCount.hasOwnProperty(contentRating)) {
+          contentRatingCount[contentRating]++;
+        } else {
+          contentRatingCount[contentRating] = 1;
+        }
+      }
+
+      displayContentRatingCount(contentRatingCount);
+    }
+
+    function countCategory(apps) {
       var categoryCount = {};
 
       for (var i = 0; i < apps.length; i++) {
         var app = apps[i];
-        var appElement = document.createElement('div');
-        appElement.innerHTML = `
-          <h3>${app.App}</h3>
-          <p><strong>Category:</strong> ${app.Category}</p>
-          <p><strong>Rating:</strong> ${app.Rating}</p>
-          <p><strong>Reviews:</strong> ${app.Reviews}</p>
-          <p><strong>Size:</strong> ${app.Size}</p>
-          <p><strong>Installs:</strong> ${app.Installs}</p>
-          <p><strong>Type:</strong> ${app.Type}</p>
-          <p><strong>Price:</strong> ${app.Price}</p>
-          <p><strong>Content Rating:</strong> ${app['Content Rating']}</p>
-          <p><strong>Genres:</strong> ${app.Genres}</p>
-          <p><strong>Last Updated:</strong> ${app['Last Updated']}</p>
-          <p><strong>Current Ver:</strong> ${app['Current Ver']}</p>
-          <p><strong>Android Ver:</strong> ${app['Android Ver']}</p>
-          <hr>
-        `;
+        var category = app.Category;
 
-        appContainer.appendChild(appElement);
-
-        counter++; // Increment the counter
-
-        // Count the number of apps per content rating
-        if (contentRatingCount.hasOwnProperty(app['Content Rating'])) {
-          contentRatingCount[app['Content Rating']]++;
+        if (categoryCount.hasOwnProperty(category)) {
+          categoryCount[category]++;
         } else {
-          contentRatingCount[app['Content Rating']] = 1;
-        }
-
-        // Count the number of apps per category
-        if (categoryCount.hasOwnProperty(app.Category)) {
-          categoryCount[app.Category]++;
-        } else {
-          categoryCount[app.Category] = 1;
-        }
-
-        if (counter === displayLimit) {
-          break; // Break the loop after reaching the display limit
+          categoryCount[category] = 1;
         }
       }
 
-      // Display the number of entries based on the sort category
-      var sortCategoryLabel = document.getElementById('sort-category-label');
-      sortCategoryLabel.textContent = `Top ${displayLimit} Apps (Sorted by ${sortBy})`;
+      displayCategoryCount(categoryCount);
+    }
 
-      // Display the number of apps per content rating
-      var contentRatingContainer = document.getElementById('content-rating-container');
-      contentRatingContainer.innerHTML = '<h4>Number of Apps per Content Rating:</h4>';
-      for (var rating in contentRatingCount) {
-        contentRatingContainer.innerHTML += `<p>${rating}: ${contentRatingCount[rating]}</p>`;
-      }
+    function displayApps(apps, sortBy) {
+      var appContainer = document.getElementById("app-container");
+      appContainer.innerHTML = ""; // Clear previous app cards
 
-      // Display the number of apps per category
-      var categoryContainer = document.getElementById('category-container');
-      categoryContainer.innerHTML = '<h4>Number of Apps per Category:</h4>';
-      for (var category in categoryCount) {
-        categoryContainer.innerHTML += `<p>${category}: ${categoryCount[category]}</p>`;
+      var sortLabel = document.getElementById("sort-category-label");
+      sortLabel.textContent = getSortLabel(sortBy);
+
+      for (var i = 0; i < apps.length; i++) {
+        var app = apps[i];
+        var card = createAppCard(app);
+        appContainer.appendChild(card);
       }
     }
+
+    function createAppCard(app) {
+      var card = document.createElement("div");
+      card.className = "app-card";
+      card.addEventListener("click", function () {
+        showAppDetails(app);
+      });
+
+      var appName = document.createElement("h4");
+      appName.textContent = app['App'];
+
+      var appCategory = document.createElement("p");
+      appCategory.textContent = "Category: " + app['Category'];
+
+      var appRating = document.createElement("p");
+      appRating.textContent = "Rating: " + app['Rating'];
+
+      var appInstalls = document.createElement("p");
+      appInstalls.textContent = "Installs: " + app['Installs'];
+
+      var appPrice = document.createElement("p");
+      appPrice.textContent = "Price: " + app['Price'];
+
+      card.appendChild(appName);
+      card.appendChild(appCategory);
+      card.appendChild(appRating);
+      card.appendChild(appInstalls);
+      card.appendChild(appPrice);
+
+      return card;
+    }
+
+    function showAppDetails(app) {
+      // Replace with your own logic to display app details
+      alert("Showing details for app: " + app['App']);
+    }
+
+    function displayContentRatingCount(contentRatingCount) {
+      var contentRatingData = Object.keys(contentRatingCount).map(function (key) {
+        return [key, contentRatingCount[key]];
+      });
+
+      Highcharts.chart('content-rating-chart', {
+        chart: {
+          type: 'column'
+        },
+        title: {
+          text: 'App Count by Content Rating'
+        },
+        xAxis: {
+          type: 'category'
+        },
+        yAxis: {
+          title: {
+            text: 'Count'
+          }
+        },
+        series: [{
+          name: 'Count',
+          data: contentRatingData
+        }]
+      });
+    }
+
+    function displayCategoryCount(categoryCount) {
+      var categoryData = Object.keys(categoryCount).map(function (key) {
+        return [key, categoryCount[key]];
+      });
+
+      Highcharts.chart('category-chart', {
+        chart: {
+          type: 'pie'
+        },
+        title: {
+          text: 'App Count by Category'
+        },
+        series: [{
+          name: 'Count',
+          data: categoryData
+        }]
+      });
+    }
+
+    function extractNumericValue(price) {
+      return parseFloat(price.replace('$', ''));
+    }
+
+    function getSortLabel(sortBy) {
+      if (sortBy === 'installs') {
+        return 'Sort by Installs';
+      } else if (sortBy === 'rating') {
+        return 'Sort by Rating';
+      } else if (sortBy === 'size') {
+        return 'Sort by Size';
+      } else if (sortBy === 'price') {
+        return 'Sort by Price';
+      } else {
+        return 'Invalid Sort Criteria';
+      }
+    }
+
+    displayData('installs'); // Initial display by installs
   </script>
 </head>
-<body onload="displayData('installs')">
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="#">App Store</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-          <select id="sort-by" class="form-control" onchange="displayData(this.value)">
-            <option value="installs">Most Used Apps</option>
-            <option value="rating">Best Ratings</option>
-            <option value="size">Largest Sizes</option>
-            <option value="price">Highest to Lowest Price</option>
-          </select>
-        </li>
-      </ul>
-    </div>
-  </nav>
-
-  <div class="container mt-4">
-    <h1 id="sort-category-label">Top 10 Apps (Sorted by Installs)</h1>
-    <div id="app-container"></div>
-
-    <div class="row mt-5">
-      <div class="col">
-        <div id="content-rating-container"></div>
-      </div>
-      <div class="col">
-        <div id="category-container"></div>
-      </div>
-    </div>
+<body>
+  <h1>App Store</h1>
+  <div id="sort-buttons">
+    <button onclick="displayData('installs')">Sort by Installs</button>
+    <button onclick="displayData('rating')">Sort by Rating</button>
+    <button onclick="displayData('size')">Sort by Size</button>
+    <button onclick="displayData('price')">Sort by Price</button>
   </div>
-
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <h2 id="sort-category-label"></h2>
+  <div id="app-container"></div>
+  <div id="content-rating-chart"></div>
+  <div id="category-chart"></div>
 </body>
 </html>
-
