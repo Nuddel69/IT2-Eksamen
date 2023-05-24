@@ -1,14 +1,17 @@
 import pandas as pd
-
+import numpy as np
 from core.data import Dataset     
 from core.presenter import Presenter
 
-class AppData(Dataset):
+class GooglePlayData(Dataset):
     def cleanup(self) -> None:
         '''
         Clean up the dataset.
         '''
-        char_to_remove = ['+', ',', '$', 'M']
+
+        self._data.drop_duplicates(inplace=True)
+
+        char_to_remove = ['+', ',', '$', 'M', 'k']
         col_to_clean = ['Price', 'Installs', 'Reviews', 'Size']
 
         for col in col_to_clean:
@@ -25,6 +28,10 @@ class AppData(Dataset):
 
             for char in target:
                 self._data[col] = self._data[col].apply(lambda x: x.replace(char, '0'))
+
+        self._data['Size'] = self._data['Size'].apply(lambda x: np.nan if x == 'Varies with device' else x)
+        self._data.dropna(inplace=True)
+
 
         # Cast Install to float
         self._data['Installs'] = self._data['Installs'].astype(float)
@@ -46,26 +53,20 @@ class AppData(Dataset):
     print("Cleanup completed.")
 
 if __name__ == "__main__":
-    data1 = AppData("./data/demo.csv")
-    renderer = Presenter(data1)
+    appData = GooglePlayData("./data/googleplaystore.csv")
+    renderer = Presenter(appData)
 
-    if not data1.parse_csv():
-        data1.cleanup()
-        print(data1._data)
-
-    print("\n\n")
-    # data1.sort("App")
-    #data1.sort("Size", True)
-    data1.sort("Last Updated")
-    #data1.sort("Price", False)
-
-
+    if not appData.parse_csv():
+        appData.cleanup()
+        print(appData._data)
 
     print("\n\n")
-    print(data1._data)
+    # appData.sort("App")
+    #appData.sort("Size", True)
+    appData.sort("Type")
+    appData.sort("Price")
+    
+    print("\n\n")
+    print(appData._data)
 
-
-
-    #renderer.plot('App', 'Installs', [0, 50], 'Mest populære', 'Appnavn', 'Antall Installasjoner')
-    # print(renderer._plot)
-
+    renderer.plot('App', 'Price', [0, 50], 'Dyreste apper', 'Appnavn', 'Priser i $')

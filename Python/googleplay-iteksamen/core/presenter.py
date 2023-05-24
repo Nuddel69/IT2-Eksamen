@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
 from core.data import Dataset
 
 class Presenter:
@@ -22,18 +21,6 @@ class Presenter:
         sns.barplot(x=xdata, y=ydata, data=subset_data)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
+        plt.xticks(rotation=90)
         plt.title(title)
         plt.show()
-
-    def string(self) -> None:
-        '''
-        Generate a formatted string representation of the data.
-        '''
-        pass
-
-    def storefront(self) -> None:
-
-        '''
-        Display the data as a storefront or in an e-commerce format.
-        '''
-        pass

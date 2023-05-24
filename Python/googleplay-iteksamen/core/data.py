@@ -25,6 +25,7 @@ class Dataset:
         try: 
             self._data = pd.read_json(self._path)
             self._data.fillna('', inplace=True)
+            self._data.drop_duplicates(inplace=True)
             return 0
         except FileNotFoundError:
             return 1
@@ -42,13 +43,14 @@ class Dataset:
         '''
         try:
             self._data = pd.read_csv(self._path)
+            self._data.drop_duplicates(inplace=True)
             return 0
         except FileNotFoundError:
             return 1
         except pd.errors.ParserError:
             return 2
 
-    def sort(self, key: str, ascending: bool = False) -> None:
+    def sort(self, key: str, ascending: bool = False):
         '''
         Sort the data based on the specified key in descending order.
 
@@ -56,6 +58,7 @@ class Dataset:
         @param ascending: Whether or not to sort by ascending order. Defaults to false.
         '''
         self._data.sort_values(key, ascending=ascending, inplace=True)
+        return self._data.sort_values(key, ascending=ascending)
 
     def cleanup(self) -> None:
         pass
