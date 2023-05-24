@@ -8,3 +8,5 @@
 
 - Kjør koden ved å skrive:
   `py main.py`
+
+
