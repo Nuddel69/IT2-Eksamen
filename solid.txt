@@ -1,0 +1,9 @@
+Single Responsibility Principle (Enhetlig ansvarsprinsipp): En klasse bør kun ha én grunn til å endre seg. Den bør kun ha ett ansvar eller en enkelt oppgave.
+
+Open/Closed Principle (Åpen/lukket-prinsippet): Programvareenheter (klasser, moduler, funksjoner) bør være åpne for utvidelse, men lukket for modifikasjon. Dette betyr at man bør kunne utvide funksjonaliteten uten å endre eksisterende kode.
+
+Liskov Substitution Principle (Liskovs substitusjonsprinsipp): Objekter av en klasse skal kunne erstattes av objekter av en hvilken som helst underklasse uten å påvirke programmets korrekthet. Dette betyr at subklasser må kunne brukes på samme måte som deres overklasser.
+
+Interface Segregation Principle (Schnittstellensegregasjonsprinsippet): Klienter bør ikke tvinges til å avhenge av grensesnitt de ikke bruker. Dette prinsippet handler om å oppdele store grensesnitt til mindre og mer spesifikke grensesnitt, slik at klienter kun er avhengige av de delene de trenger.
+
+Dependency Inversion Principle (Avhengighetsinverteringsprinsippet): Høyere nivåmoduler bør ikke være avhengige av lavere nivåmoduler. Begge bør være avhengige av abstraksjoner. Dette prinsippet fremmer bruk av grensesnitt og abstraksjoner for å redusere kobling og oppnå fleksibilitet og gjenbrukbarhet.
