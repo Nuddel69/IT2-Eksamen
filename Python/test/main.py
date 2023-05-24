@@ -1,5 +1,3 @@
-'''Make code  more polymorphic '''
-
 import csv
 import matplotlib.pyplot as plt
 
