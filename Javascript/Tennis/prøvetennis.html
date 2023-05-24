@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Pong Game</title>
+    <style>
+      .game-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      canvas {
+        border: 1px solid black;
+      }
+      body {
+        background-color: lightgray;
+      }
+      h1 {color: red;
+        text-align: center; 
+        text-decoration: underline; 
+        font-style: italic;}
+      p {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Min vegg-pong</h1>
+    <p>Hvordan Spille:</p>
+    <p>Spiller: W og S taster for å bevege racket til høyre og til venstre</p>
+    <p>Spacebar for å pause spill</p>
+    <p>R tast for å tilbakestille spill</p>
+    <div class="game-container">
+      <canvas id="gameCanvas" width="400" height="600"></canvas>
+    </div>
+    <script src="tennis.js"></script>
+    <p>ha det morro</p>
+  </body>
+</html>
